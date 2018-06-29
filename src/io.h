@@ -29,18 +29,28 @@ void io_open(void);
 void io_send_byte(uint8_t b);
 
 /**
- * io_main() - The IO main loop
- */
-void io_main(void);
-
-/**
  * io_recv_serial() - Receive and interpret serial data.
  */
 void io_recv_serial(void);
 
 /**
+ * io_recv_ethernet() - Receive and interpret serial data.
+ */
+void io_recv_ethernet(void);
+
+/**
+ * io_open_ethernet() - Open ethernet device and set up network connection.
+ */
+void io_open_ethernet(void);
+
+/**
  * io_done() - Called to close I/O
  */
 void io_done(void);
+
+/**
+ * tcp_recv(tcp_buf, tcp_len) - ip65 callback to fill buffer.
+ */
+void tcp_recv(const uint8_t* tcp_buf, int16_t tcp_len);
 
 #endif /* IO_H */

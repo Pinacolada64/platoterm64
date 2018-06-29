@@ -34,7 +34,7 @@ static padPt TTYLocSave;
 extern padBool TTY;
 extern padPt TTYLoc;
 
-static char temp_ip_address[17];
+char temp_ip_address[64];
 
 /**
  * Run the preferences menu
@@ -306,6 +306,41 @@ void prefs_get_address(void)
   while (ch != 0x0d)
     {
       ch=prefs_get_key_matching1("0123456789.");
+      if (ch==0x08) /* was translated from 0x14 to 0x08 */
+  	{
+	  if (strp>0)
+	    {
+	      --strp;
+	      temp_ip_address[strp]=0;
+	      ShowPLATO(&ch,1);
+	    }
+  	}
+      else if (ch==0x0d)
+	{
+	  // Don't append or show the CR
+	}
+      else
+  	{
+  	  temp_ip_address[strp]=ch;
+  	  ShowPLATO(&ch,1);
+	  ++strp;	  
+  	}
+    }
+}
+
+/**
+ * prefs_get_hostname()
+ * get string with hostname, terminated by return.
+ */
+void prefs_get_hostname(void)
+{
+  unsigned char strp=0;
+  
+  ch=0;
+
+  while (ch != 0x0d)
+    {
+      ch=prefs_get_key_matching1("0123456789.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
       if (ch==0x08) /* was translated from 0x14 to 0x08 */
   	{
 	  if (strp>0)

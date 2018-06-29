@@ -18,8 +18,12 @@
 #include "io.h"
 #include "config.h"
 #include "splash.h"
+#include "config.h"
 
+extern ConfigInfo config;
 uint8_t already_started=false;
+uint8_t running=false;
+uint8_t restart=true;
 
 /**
  * greeting(void) - Show terminal greeting
@@ -32,24 +36,45 @@ void greeting(void)
 
 void main(void)
 {
-  screen_init();
-  config_init();
-  io_init();
-  touch_init();
-  terminal_init();
-  greeting();
-  screen_beep();
-  
-  already_started=true;
-  
-  // And do the terminal
-  for (;;)
+  while (restart==true)
     {
-      io_main();
-      keyboard_main();
-      touch_main();
+      screen_init();
+      config_init();
+      terminal_init();
+      greeting();
+      screen_beep();
+      io_init();
+      //      touch_init();
+      
+      already_started=true;
+      running=true;
+      
+      // And do the terminal
+      // Yes, I know this is weird, but since this is a tightly running loop
+      // The execution time of the loop must be minimized -Thom
+      if (config.io_mode==IO_MODE_SERIAL)
+	{
+	  while (running==true)
+	    {
+	      io_recv_serial();
+	      keyboard_main();
+	      //      touch_main();
+	    }
+	}
+      else if (config.io_mode==IO_MODE_ETHERNET)
+	{
+	  while (running==true)
+	    {
+	      io_recv_ethernet();
+	      keyboard_main();
+	      // touch_main();
+	    }
+	}
+      
+      screen_done();
+      touch_done();
+      io_done();
     }
   
-  screen_done();
-  touch_done();
+  return;
 }

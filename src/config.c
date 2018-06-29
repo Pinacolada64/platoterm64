@@ -72,15 +72,16 @@ void config_save(void)
  */
 void config_set_defaults(void)
 {
-  config.io_mode = IO_MODE_SERIAL;
+  config.io_mode = IO_MODE_ETHERNET;
   config.baud = SER_BAUD_2400;
-  config.use_dhcp = false;
+  config.use_dhcp = true;
   config.ip_address=0;
   config.netmask=0;
   config.gateway=0;
   config.dns=0;
   strcpy(config.driver_ser,CONFIG_DEFAULT_SERIAL_DRIVER);
   strcpy(config.driver_mou,CONFIG_DEFAULT_MOUSE_DRIVER);
+  strcpy(config.hostname,CONFIG_DEFAULT_HOSTNAME);
   config.color_foreground=TGI_COLOR_LIGHTBLUE;
   config.color_background=TGI_COLOR_BLUE;
   config.color_border=TGI_COLOR_LIGHTBLUE;

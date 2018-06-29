@@ -7,12 +7,16 @@
  * io.c - Input/output functions (serial/ethernet)
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 #include <serial.h>
+#include "ip65.h"
 #include <stdint.h>
 #include <peekpoke.h>
 #include "io.h"
 #include "protocol.h"
+#include "prefs.h"
 #include "config.h"
 
 #define NULL 0
@@ -26,7 +30,11 @@ static uint8_t ch=0;
 static uint8_t lastch=0;
 static uint8_t io_res;
 static uint8_t recv_buffer_size=0;
+extern char temp_ip_address[64];
 extern ConfigInfo config;
+
+unsigned char buf[1500];
+int len;
 
 static struct ser_params params = {
   SER_BAUD_38400,
@@ -35,6 +43,9 @@ static struct ser_params params = {
   SER_PAR_NONE,
   SER_HS_HW
 };
+
+extern uint8_t running;
+extern uint8_t restart;
 
 /**
  * io_init() - Set-up the I/O
@@ -76,7 +87,7 @@ void io_open(void)
     }
   else if (config.io_mode == IO_MODE_ETHERNET)
     {
-      // Not implemented, yet.
+      io_open_ethernet();
     }
 }
 
@@ -85,16 +96,16 @@ void io_open(void)
  */
 void io_send_byte(uint8_t b)
 {
-  if ((xoff_enabled==false) || (b==0x11))
-    ser_put(b);
-}
-
-/**
- * io_main() - The IO main loop
- */
-void io_main(void)
-{
-  io_recv_serial();
+  if (config.io_mode == IO_MODE_SERIAL)
+    {
+      if ((xoff_enabled==false) || (b==0x11))
+	ser_put(b);
+    }
+  else if (config.io_mode == IO_MODE_ETHERNET)
+    {
+      tcp_send(&b,1);
+    }
+    
 }
 
 /**
@@ -132,10 +143,151 @@ void io_recv_serial(void)
 }
 
 /**
+ * io_recv_ethernet() - Receive and interpret serial data.
+ */
+void io_recv_ethernet(void)
+{
+  uint16_t bufindex;
+  ip65_process();
+  if (len==-1)
+    {
+      // Disconnected. Restart.
+      running=false;
+      restart=true;
+      prefs_display("disconnected. press return to restart");
+      prefs_get_address();
+    }
+  else if (len)
+    {
+      for (bufindex=0;bufindex<len;bufindex++)
+	{
+	  if ((bufindex % 11) == 0)
+	    ip65_process();
+	  
+	  ch=buf[bufindex];
+	  if (ch==0xff && lastch == 0xFF)
+	    {
+	      lastch=0x00;
+	    }
+	  else
+	    {
+	      lastch=ch;
+	      ShowPLATO(&ch,1);
+	    }
+	}
+      len=0;
+    }
+}
+
+/**
+ * io_open_ethernet() - Open ethernet device and set up network connection.
+ */
+void io_open_ethernet(void)
+{
+  uint32_t address;
+  uint8_t resolved=false;
+  
+  // I am re-using the prefs code to provide messages and prompts for ethernet.
+  
+  prefs_clear();
+  prefs_display("initializing ip65...");
+  if (ip65_init(DRV_INIT_DEFAULT))
+    {
+      prefs_select("failed. opening prefs.");
+      prefs_clear();
+      prefs_run();
+      restart=true;
+      running=false;
+      return;
+    }
+  prefs_select("ok");
+  
+  if (config.use_dhcp==true)
+    {
+      prefs_display("dhcp...");
+      if (dhcp_init())
+	{
+	  prefs_select("failed. opening prefs");
+	  prefs_clear();
+	  prefs_run();
+	  restart=true;
+	  running=false;
+	  return;
+	}
+      prefs_select("ok");
+    }
+
+  while (resolved==false)
+    {
+      prefs_display("host (return for last): ");
+      prefs_get_address();
+      
+      if (temp_ip_address[0]==0x0d) // RETURN was pressed.
+	{
+	  strcpy(temp_ip_address,config.hostname);
+	}
+      
+      prefs_select("ok");
+      prefs_clear();
+      
+      prefs_display("resolving host...");
+      address=dns_resolve(temp_ip_address);
+      
+      if (address==0)
+	{
+	  prefs_select("failed.");
+	  prefs_clear();
+	}
+      else
+	{
+	  prefs_select(dotted_quad(address));
+	  prefs_clear();
+	  prefs_save(); // Go ahead and save host for later.
+	  resolved=true;
+	}
+
+      prefs_display("connecting...");
+
+      if (tcp_connect(address,8005,tcp_recv))
+	{
+	  prefs_select("failed.");
+	  prefs_clear();
+	}
+      else
+	{
+	  prefs_select("connected.");
+	  resolved=true;
+	  prefs_clear();
+	}
+    }
+}
+
+/**
  * io_done() - Called to close I/O
  */
 void io_done(void)
 {
-  ser_close();
-  ser_uninstall();
+  if (config.io_mode==IO_MODE_SERIAL)
+    {
+      ser_close();
+      ser_uninstall();
+    }
+  else if (config.io_mode==IO_MODE_ETHERNET)
+    {
+      tcp_close();
+    }
+}
+
+/**
+ * tcp_recv(tcp_buf, tcp_len) - ip65 callback to fill buffer.
+ */
+void tcp_recv(const uint8_t* tcp_buf, int16_t tcp_len)
+{
+  if (len)
+    return;
+
+  len = tcp_len;
+  
+  if (len != 1)
+    memcpy(buf,tcp_buf,len);
 }

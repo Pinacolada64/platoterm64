@@ -24,6 +24,8 @@
 #define CONFIG_DEFAULT_SERIAL_DRIVER CONFIG_SERIAL_DRIVER_UP2400
 #define CONFIG_DEFAULT_MOUSE_DRIVER CONFIG_MOUSE_DRIVER_1351
 
+#define CONFIG_DEFAULT_HOSTNAME "irata.online"
+
 typedef struct configInfo
 {
   unsigned char io_mode;
@@ -38,6 +40,7 @@ typedef struct configInfo
   unsigned char color_foreground;
   unsigned char color_background;
   unsigned char color_border;
+  unsigned char hostname[64];
 } ConfigInfo;
 
 /**

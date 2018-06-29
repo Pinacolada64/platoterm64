@@ -58,6 +58,12 @@ void prefs_save(void);
 void prefs_get_address(void);
 
 /**
+ * prefs_get_hostname()
+ * get string with ip address numbers, terminated by return.
+ */
+void prefs_get_hostname(void);
+
+/**
  * prefs_ip(void)
  * Preferences menu for IP address
  */
