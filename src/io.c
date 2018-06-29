@@ -220,7 +220,7 @@ void io_open_ethernet(void)
   while (resolved==false)
     {
       prefs_display("host (return for last): ");
-      prefs_get_address();
+      prefs_get_hostname();
       
       if (temp_ip_address[0]==0x0d) // RETURN was pressed.
 	{
