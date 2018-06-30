@@ -149,19 +149,6 @@ void io_recv_serial(void)
 void io_recv_ethernet(void)
 {
   ip65_process();
-  if (len==-1)
-    {
-      // Disconnected. Restart.
-      running=false;
-      restart=true;
-      prefs_display("disconnected. press return to restart");
-      prefs_get_address();
-    }
-  else if (len)
-    {
-      ShowPLATO((padByte*)&buf,len);
-      len=0;
-    }
 }
 
 /**
@@ -269,25 +256,5 @@ void io_done(void)
  */
 void tcp_recv(const uint8_t* tcp_buf, int16_t tcp_len)
 {
-  int16_t sbufindex=0;
-  int16_t dbufindex=0;
-  uint8_t ch,lastch;
-  
-  if (len)
-    return;
-
-  for (sbufindex=0;sbufindex<tcp_len;++sbufindex)
-    {
-      ch=tcp_buf[sbufindex];
-      if (ch==0xff && lastch==0xff) // Handle the idiotic IAC escape!
-	{
-	  lastch=0;
-	}
-      else
-	{
-	  lastch=buf[dbufindex++]=tcp_buf[sbufindex];
-	  ++len;
-	}
-    }
-  
+  ShowPLATO((padByte*)tcp_buf,tcp_len);  
 }
