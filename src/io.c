@@ -7,6 +7,7 @@
  * io.c - Input/output functions (serial/ethernet)
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -203,29 +204,31 @@ void io_open_ethernet(void)
 
   while (resolved==false)
     {
-      prefs_display("host (return for last): ");
+      sprintf(buf,"host (return for %s): ",config.hostname);
+      prefs_display(buf);
       prefs_get_hostname();
       
-      if (temp_ip_address[0]==0x0d) // RETURN was pressed.
+      if (temp_ip_address[0]==0x00) // RETURN was pressed.
 	{
 	  strcpy(temp_ip_address,config.hostname);
 	}
       
-      prefs_select("ok");
+      prefs_select("ok ");
       prefs_clear();
       
-      prefs_display("resolving host...");
+      prefs_display("resolving host... ");
       address=dns_resolve(temp_ip_address);
       
       if (address==0)
 	{
-	  prefs_select("failed.");
+	  prefs_select(" failed.");
 	  prefs_clear();
 	}
       else
 	{
 	  prefs_select(dotted_quad(address));
 	  prefs_clear();
+	  strcpy(config.hostname,temp_ip_address);
 	  prefs_save(); // Go ahead and save host for later.
 	  resolved=true;
 	}

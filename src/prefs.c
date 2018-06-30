@@ -335,6 +335,8 @@ void prefs_get_address(void)
 void prefs_get_hostname(void)
 {
   unsigned char strp=0;
+
+  memset(&temp_ip_address,0,sizeof(temp_ip_address));
   
   ch=0;
 
