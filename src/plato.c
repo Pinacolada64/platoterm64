@@ -18,7 +18,7 @@
 #include "io.h"
 #include "config.h"
 #include "splash.h"
-#include "config.h"
+#include "prefs.h"
 
 extern ConfigInfo config;
 uint8_t already_started=false;
@@ -31,6 +31,7 @@ uint8_t restart=true;
 void greeting(void)
 {
   ShowPLATO(splash,sizeof(splash));
+  prefs_display("platoterm64 ready - f3 for setup");
   terminal_initial_position();
 }
 
