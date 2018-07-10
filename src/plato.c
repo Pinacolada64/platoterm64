@@ -22,6 +22,9 @@ uint8_t already_started=false;
 extern padByte splash[];
 extern short splash_size;
 
+uint8_t running=false;
+uint8_t restart=false;
+
 /**
  * greeting(void) - Show terminal greeting
  */
