@@ -53,4 +53,9 @@ void io_done(void);
  */
 void tcp_recv(const uint8_t* tcp_buf, int16_t tcp_len);
 
+/**
+ * Return the serial buffer size
+ */
+uint8_t io_serial_buffer_size(void);
+
 #endif /* IO_H */

@@ -4,42 +4,18 @@
  * 
  * Author: Thomas Cherryhomes <thom.cherryhomes at gmail dot com>
  *
- * keyboard.c - Keyboard functions
+ * keyboard.c - Keyboard functions (c64)
  */
 
 #include <stdint.h>
 #include <peekpoke.h>
-#include <stdbool.h>
-#include "keyboard.h"
+#include "../screen.h"
+#include "../prefs.h"
+#include "../keyboard.h"
 #include "key.h"
-#include "screen.h"
-#include "protocol.h"
-#include "prefs.h"
-#include "io.h"
 
 static uint8_t lastkey;
 extern uint8_t xoff_enabled;
-
-/**
- * keyboard_out - If platoKey < 0x7f, pass off to protocol
- * directly. Otherwise, platoKey is an access key, and the
- * ACCESS key must be sent, followed by the particular
- * access key from PTAT_ACCESS.
- */
-void keyboard_out(uint8_t platoKey)
-{
-  if (platoKey==0xff)
-    return;
-  
-  if (platoKey>0x7F)
-    {
-      Key(ACCESS);
-      Key(ACCESS_KEYS[platoKey-0x80]);
-      return;
-    }
-  Key(platoKey);
-  return;
-}
 
 /**
  * keyboard_main - Handle the keyboard presses
@@ -70,18 +46,6 @@ void keyboard_main(void)
   else if (key==0x05 && lastkey!=0x05)
     {
       prefs_run();
-    }
-  else if (key==0x06 && lastkey!=0x06)
-    {
-      if (xoff_enabled==true)
-	{
-	  xoff_enabled=false;
-	  io_send_byte(XON);
-	}
-      else
-	{
-	  io_send_byte(XOFF);
-	}
     }
   
   if (key!=lastkey)
